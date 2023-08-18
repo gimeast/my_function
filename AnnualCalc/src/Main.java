@@ -1,5 +1,7 @@
 import java.time.LocalDate;
 import java.time.Period;
+import java.util.ArrayList;
+import java.util.List;
 
 import static java.time.temporal.ChronoUnit.DAYS;
 
@@ -8,8 +10,8 @@ public class Main {
     public static void main(String[] args) {
 
         // 예시 사용자의 입사일과 기준 일자 설정
-        LocalDate hireDate = LocalDate.of(2012, 7, 15);
-        LocalDate currentDate = LocalDate.of(2023, 7, 13);
+        LocalDate hireDate = LocalDate.of(2023, 7, 15);
+        LocalDate currentDate = LocalDate.of(2024, 7, 14);
 
         System.out.println("고용날짜: " + hireDate);
         System.out.println("현재날짜: " + currentDate);
@@ -17,13 +19,32 @@ public class Main {
         float fiscalAnnual = fiscalYearMethod(hireDate, currentDate);
         System.out.println("[회계연도 방식] 연차계산 결과 : "+fiscalAnnual);
 
+        double fiscalAddDays = decimalCalc("소수점 2째 자리 올림", fiscalAnnual);
+        System.out.println("회계연도 소수점 자리 적용: "+fiscalAddDays);
+
         System.out.println("====================================");
 
         float dateJoined = entryDateMethod(hireDate, currentDate);
         System.out.println("[입사일자 방식] 연차계산 결과 : "+dateJoined);
+
+        double dateJoinedAddDays = decimalCalc("소수점 2째 자리 올림", dateJoined);
+        System.out.println("입사일자 소수점 자리 적용: " + dateJoinedAddDays);
+
+        System.out.println("====================================");
+
+        double decimalCalc = decimalCalc("소수점 3째 자리 버림", 13.742);
+        System.out.println("decimalCalc: "+decimalCalc);
     }
 
-    // 회계연도 방식
+    /**
+     * @param hireDate    the hire date
+     * @param currentDate the current date
+     * @return the float
+     * @Method Name : fiscalYearMethod
+     * @Method 설명 : 회계연도 방식 계산기
+     * @작성일 : 2023.
+     * @작성자 : donguk
+     */
     public static float fiscalYearMethod(LocalDate hireDate, LocalDate currentDate) {
         float result = 0.0f;
 
@@ -78,7 +99,15 @@ public class Main {
         return result;
     }
 
-    // 입사일자 방식
+    /**
+     * @param hireDate    the hire date
+     * @param currentDate the current date
+     * @return the float
+     * @Method Name : entryDateMethod
+     * @Method 설명 : 입사일자 방식 계산기
+     * @작성일 : 2023.
+     * @작성자 : donguk
+     */
     public static float entryDateMethod(LocalDate hireDate, LocalDate currentDate) {
         float result = 0.0f;
         hireDate = hireDate.minusDays(1); // 고용일 전날부터로 계산
@@ -131,10 +160,71 @@ public class Main {
                     break;
                 }
             }
-
         }
 
         return result;
+    }
+
+    /**
+     * @param method  the method
+     * @param addDays the add days
+     * @return the double
+     * @Method Name : decimalCalc
+     * @Method 설명 : 연차계산 소수자리수 사용 규칙별 계산 
+     * @작성일 : 2023.
+     * @작성자 : donguk
+     */
+    public static double decimalCalc(String method, double addDays) {
+        //소수 2째 자리 버림하여 0.5단위로 계산한다.
+        if("소수점 2째 자리 버림".equals(method)) {
+            addDays = Math.floor(addDays * 10) / 10.0;
+
+            int firstDecimalDigit = (int)((addDays * 10) % 10);
+            if(firstDecimalDigit < 5) { //소수점 첫째 자리가 5미만이면 내림
+                addDays = (int)addDays;
+            }else { //소수점 첫째 자리가 5이상이면 0.5
+                addDays = (int)addDays + 0.5;
+            }
+        } else if("소수점 2째 자리 올림".equals(method)) {
+            addDays = Math.ceil(addDays * 10) / 10.0;
+
+            int firstDecimalDigit = (int)((addDays * 10) % 10);
+            if(firstDecimalDigit < 5) { //소수점 첫째 자리가 5미만이면 내림
+                addDays = (int)addDays;
+            }else { //소수점 첫째 자리가 5이상이면 0.5
+                addDays = (int)addDays + 0.5;
+            }
+        } else if("소수점 2째 자리 반올림".equals(method)) {
+            addDays = Math.round(addDays * 10) / 10.0;
+
+            int firstDecimalDigit = (int)((addDays * 10) % 10);
+            if(firstDecimalDigit < 5) { //소수점 첫째 자리가 5미만이면 내림
+                addDays = (int)addDays;
+            }else { //소수점 첫째 자리가 5이상이면 0.5
+                addDays = (int)addDays + 0.5;
+            }
+        } else if("소수점 3째 자리 버림".equals(method)) {
+
+            int integerPart = (int) addDays; //정수값만 구한다.
+            double decimalPart = addDays - integerPart; //소수점값만 구한다.
+
+            int firstDecimalDigit = (int)(decimalPart * 10); //소수점 첫번째 자리를 구한다.
+            int secondDecimalDigit = (int)(decimalPart * 100) % 10; //소수점 두번째 자리를 구한다.
+
+            firstDecimalDigit = (firstDecimalDigit >= 5) ? 5 : 0; // 첫번째 자리가 5이상일 경우 5이고 작을 경우 0
+            secondDecimalDigit = (secondDecimalDigit >= 5) ? 5 : 0; // 두번째 자리가 5이상일 경우 5이고 작을 경우 0
+
+            addDays = integerPart + (firstDecimalDigit / 10.0) + (secondDecimalDigit / 100.0);
+
+        }else if("소수점 1째 자리 올림".equals(method)) {
+            addDays = Math.ceil(addDays);
+        } else if("소수점 1째 자리 반올림".equals(method)) {
+            addDays = Math.round(addDays);
+        } else if("소수점 1째 자리 내림".equals(method)) {
+            addDays = Math.floor(addDays);
+        }
+
+        return addDays;
     }
 
 
